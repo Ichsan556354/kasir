@@ -44,9 +44,11 @@
 		$result = mysqli_query($con, "INSERT INTO user (UserID, NamaUser, Password, level) VALUES('$id','$name','$password', '$level')");
 		
 		// Show message when user added
-		echo "User added successfully. <a href='index.php?page=user'>View Users</a>";
-        header("Location: index.php?page=user");
-        echo "<script>alert('Menu baru berhasil ditambahkan')</script>";
+		
+        echo "<script>
+            alert('User baru berhasil ditambahkan');
+            window.location.href='?page=user';
+        </script>";
 
 	}
 

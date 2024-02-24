@@ -39,7 +39,6 @@
                                 $sql = $con->query("SELECT * FROM produk");
                                 while ($data= $sql->fetch_assoc()) {
                                     $produkid = $data['ProdukID'];
-                                    $sql2 = $con->query("SELECT * FROM detailpenjualan WHERE ProdukID = '$produkid'");
                             ?>
                             <tr>
                                 <td class="text-center"><?php echo $no++ ?></td>
@@ -49,6 +48,7 @@
                                 <td class="text-center"><?php echo $data['Stok']?></td>
                                 <td class="text-center">
                                 <?php 
+                                    $sql2 = $con->query("SELECT * FROM detailpenjualan WHERE ProdukID = '$produkid'");
                                     $produkTerjual = 0;
                                     while ($data2=$sql2->fetch_assoc()) {    
                                         $produkTerjual = $data2['JumlahProduk'] + $produkTerjual;
@@ -56,7 +56,7 @@
                                     echo $produkTerjual;
                                 ?>
                                 </td>
-                                <?php
+                                <?php 
                                     if ($level == "Administrator") {
                                 ?>
                                 <td class="text-center" align="center" width="12%"><a href="?page=edit-produk&ProdukID=<?= $data['ProdukID']; ?>" class="badge badge-primary p-2" title="Edit"><i class="">Edit</i></a>  <a href="?page=hapus-produk&ProdukID=<?= $data['ProdukID']; ?>" class="badge badge-danger p-2 delete-data" title='Delete'><i class="">Hapus</i></a></td>
@@ -72,3 +72,4 @@
             </div>
         </div>
     </div>
+ 

@@ -17,16 +17,16 @@ if (isset($_POST['submit'])) {
         $_SESSION['NamaUser'] = $row['NamaUser'];
         $_SESSION['level'] = $row['level'];
         
-        echo "<script>alert('Berhasil Masuk!')</script>";
+        echo "<script>
+            alert('Berhasil Login');
+            window.location.href='index.php';
+        </script>";
         
-        
-        header("Location: index.php");
-        
-        
-        
-        
+
     } else {
-        echo "<script>alert('Username atau password Anda salah. Silahkan coba lagi!')</script>";
+        echo "<script>
+        alert('Gagal Login');
+        </script>";
     }
 }
 ?>

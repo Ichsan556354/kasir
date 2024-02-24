@@ -25,6 +25,7 @@
                                     <th class="text-center">No</th>
                                     <th class="text-center">Nama User</th>
                                     <th class="text-center">Password</th>
+                                    <th class="text-center">Level</th>
                                     <?php
                                         if ($level == "Administrator") {
                                     ?>
@@ -55,7 +56,7 @@
                                     </a> | 
                                     <a href="?page=hapus-user&UserID=<?= $data['UserID']; ?>" class="badge badge-danger p-2 delete-data" title='Delete'>
                                     <i class="">Hapus</i>
-                                    </a> 
+                                    </a>
                                 </td>
                                 <?php } ?>
                             </tr>

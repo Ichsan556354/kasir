@@ -14,16 +14,22 @@ if (isset($_POST['update'])) {
     $ext = pathinfo($filename, PATHINFO_EXTENSION);
 
     if(!in_array($ext,$ekstensi) ) {
-        header("location:index.php?page=tambah-produk");
+        echo "<script>
+            alert('Produk gagal Di edit');
+        </script>";
     } else{
         if($ukuran < 1044070){		
             $foto = $rand.'_'.$filename;
             move_uploaded_file($_FILES['foto']['tmp_name'], '../image/'.$rand.'_'.$filename);
             $result = mysqli_query($con, "UPDATE produk SET foto='$foto', NamaProduk='$name', Harga=$harga, Stok=$stok WHERE ProdukID=$id");
-            header("location:index.php?alert('berhasil')");
-        }else{
-            header("location:index.php?alert=gagak_ukuran");
-            echo "Salah ga tau kenapa";
+            echo "<script>
+                alert('Produk berhasil Di edit');
+                window.location.href='?page=stok';
+            </script>";
+        } else {
+            echo "<script>
+                alert('Produk gagal Di edit');
+            </script>";
         }
     }
 
@@ -39,10 +45,9 @@ while($user_data = mysqli_fetch_array($result1))
 	$name = $user_data['NamaProduk'];
 	$harga = $user_data['Harga'];
     $stok = $user_data['Stok'];
+    $foto = $user_data['foto'];
 }
 ?>
-
-
         <div class="col-md-12">
             <div class="card well">
                 <div class="card-header">
@@ -52,7 +57,7 @@ while($user_data = mysqli_fetch_array($result1))
                     <form class="pt-3 mt-3" action="" method="post" enctype="multipart/form-data">
                         <div class="form-group">
                             <label for="">Pilih Foto Produk</label>
-                            <input type="file" class="form-control-file" name="foto" id="">
+                            <input type="file" class="form-control-file" value="<?php echo $foto ?>" name="foto" id="">
                         </div>
                         <div class="form-group">
                             <p class="col-form-label" for="">Nama Produk</p>

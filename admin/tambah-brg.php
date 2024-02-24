@@ -59,7 +59,11 @@ if(!in_array($ext,$ekstensi) ) {
         $foto = $rand.'_'.$filename;
         move_uploaded_file($_FILES['foto']['tmp_name'], '../image/'.$rand.'_'.$filename);
         mysqli_query($con, "INSERT INTO produk (ProdukID, foto, NamaProduk, Harga, Stok) VALUES('$id', '$foto', '$name', '$harga', '$stok')");
-        header("location:index.php?alert('berhasil')");
+        echo "<script>
+            alert('Produk baru berhasil ditambahkan');
+            window.location.href='?page=stok';
+        </script>";
+
     }else{
         header("location:index.php?alert=gagak_ukuran");
         echo "Salah ga tau kenapa";
@@ -69,4 +73,4 @@ if(!in_array($ext,$ekstensi) ) {
     echo "<script>alert('Product added successfully.')</script>";
 } 
 }
-?>
+?>  

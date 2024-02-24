@@ -1,130 +1,243 @@
 <?php
-include('koneksi/koneksi.php');
-include("header.php");
-
-if (isset($_POST['tambah'])) {
-    $tanggal = $_POST['tanggal'];
-    $nama = $_POST['nama'];
-    $nomeja = $_POST['nomeja'];
-
-    $sql = $con->query("INSERT INTO penjualan (TanggalPenjualan) VALUES ('$tanggal')");
-    $id_transaksi_baru = mysqli_insert_id($con);
+    include "koneksi/koneksi.php";
     
-    $sql = $con->query("INSERT INTO pelanggan (PelangganID, NoMeja, NamaPelanggan) VALUES ('$id_transaksi_baru', '$nomeja', '$nama')");
-    $id_pelanggan_baru = mysqli_insert_id($con);
+    //kode penjualan
+    $query1 = mysqli_query($con, "SELECT max(PenjualanID) as kodeTerbesar FROM penjualan");
+    $data1 = mysqli_fetch_array($query1);
+    $kodePenjualan = $data1['kodeTerbesar'];
     
-    $menu_jumlah = $_POST['menu'];
-    $jumlah_array = $_POST['jumlah'];
-    foreach ($menu_jumlah as $i => $item) {
-        $item_parts = explode("|", $item);
-        $produk_id = $item_parts[0];
-        $harga = $item_parts[1];
-        $jumlah = $jumlah_array[$i];
-
-        $sql3 = $con->query("INSERT INTO detailpenjualan (DetailID, ProdukID, JumlahProduk, Subtotal) VALUES ('$id_pelanggan_baru', '$produk_id', '$jumlah', '$harga')");
-        $sql4 = $con->query("UPDATE produk SET Stok = Stok - $jumlah  WHERE ProdukID = '$produk_id'");
-    }
-
-    header("Location: daftar-transaksi.php");
-    exit();
-}
-
-
+    // mengambil angka dari kode barang terbesar, menggunakan fungsi substr
+    // dan diubah ke integer dengan (int)
+    $urutan = (int) substr($kodePenjualan, 3, 3);
+    
+    // bilangan yang diambil ini ditambah 1 untuk menentukan nomor urut berikutnya
+    $urutan++;
+    
+    // membentuk kode barang baru
+    // perintah sprintf("%03s", $urutan); berguna untuk membuat string menjadi 3 karakter
+    // misalnya perintah sprintf("%03s", 15); maka akan menghasilkan '015'
+    // angka yang diambil tadi digabungkan dengan kode huruf yang kita inginkan, misalnya BRG 
+    $huruf = "421";
+    $PenjualanID = $huruf . sprintf("%03s", $urutan);
 ?>
 
-  
-        <script>
-            // Fungsi untuk menambahkan input field untuk menu
-            function tambahMenu() {
-                var container = document.getElementById("menuContainer");
-                var newMenuInput = document.createElement("div");
-
-                newMenuInput.innerHTML = `
-                          <div class="">
-                              <label for="menu" class="form-label">Menu</label>
-                              <select id="menu" name="menu[]" class="form-control">
-                                <option>Pilih Menu</option>
-                                  <?php
-                                  $sql6 = $con->query("SELECT * FROM produk");
-                                  while ($data= $sql6->fetch_assoc()) {
-                                      echo "<option value='" . $data['ProdukID'] . "|" . $data['Harga'] . "'>" . $data['NamaProduk'] . " - Rp." . number_format($data['Harga']) ." - Stok:" . $data['Stok'] . "</option>";
-                                  }
-                                  ?>
-                              </select>
-                          </div>
-                          <div class="mb-3">
-                              <label for="jumlah" class="form-label">jumlah</label>
-                              <input type="number" min="1" class="form-control" id="jumlah" name="jumlah[]">
-                          </div>
-                `;
-
-                container.appendChild(newMenuInput);
-            }
-        </script>        
-      </head>
+<?php 
+    // ID PELANGGAN
+    $queryIdPelanggan = mysqli_query($con, "SELECT max(PelangganID) as kodeTerbesar FROM pelanggan");
+    $dataPelangganID = mysqli_fetch_array($queryIdPelanggan);
+    $kodePelanggan = $dataPelangganID['kodeTerbesar'];
+    $urutanPelanggan = (int) substr($kodePelanggan, 3, 3);
     
-    <nav class="navbar navbar-expand-lg navbar-primary bg-primary fixed-top">
-        <div class="container-fluid">
-            <a class="navbar-brand" href="#">Pelanggan</a>
-            <div class="navbar-collapse">
-                <ul class="navbar-nav">
-                    <li class="nav-item">
-                        <a class="nav-link" href="pilih-menu.php">Beranda</a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="transaksi.php">Transaksi</a>
-                    </li>
-                </ul>
+    $urutanPelanggan++;
+    $huruf2 = "222";
+    $PelangganID = $huruf2 . sprintf("%03s", $urutanPelanggan);
+echo $PelangganID;
+    // ID DETAIL PENJUALAN
+    $query = mysqli_query($con, "SELECT max(DetailID) as kodeTerbesar FROM detailpenjualan");
+    $data = mysqli_fetch_array($query);
+    $kodeDetail = $data['kodeTerbesar'];
+    $urutan = (int) substr($kodeDetail, 3, 3);
+
+    $urutan++;
+    $huruf = "111";
+    $DetailID = $huruf . sprintf("%03s", $urutan);
+
+    $totalHarga = 0;
+    if (isset($_POST['pesan'])) {
+        $idPenjualan = $_POST['noTransaksi'];
+
+        // simpan data transaksi (detail)
+        $namaProduk = $_POST['namaProduk'];
+        $harga = $_POST['harga'];
+        $jumlah = $_POST['jumlah'];
+        $totalHarga = $harga * $jumlah;
+        
+        $sqlproduk = $con->query("SELECT * FROM produk WHERE NamaProduk = '$namaProduk'");
+        $produk = mysqli_fetch_assoc($sqlproduk);
+        $idproduk = $produk['ProdukID'];
+        $stok = $produk['Stok'];
+        $tambahPesanan = mysqli_query($con, "INSERT INTO detailpenjualan VALUES ('$DetailID', '$PenjualanID', '$idproduk', '$jumlah', '$totalHarga')");
+        
+        // Mengurangi Stok ketika membeli
+        $sisaStok = $stok - $jumlah;
+        $sisaStok = mysqli_query($con, "UPDATE produk SET stok=$sisaStok");
+        if ($tambahPesanan) {
+            $_POST['namaProduk'] = "";
+            $_POST['harga'] = "";
+            $_POST['jumlah'] = "";
+            echo "
+                <script>
+                    alert('Berhasil ditambahkan');
+                    window.location.href='index.php?page=transaksi';
+                </script>
+            ";
+        } else {
+            echo "
+                <script>
+                    alert('Gagal');
+                    window.location.href='index.php?page=transaksi';
+                </script>
+            ";
+        }
+    }
+
+    $sqlhargaTotal = $con->query("SELECT * FROM detailpenjualan WHERE PenjualanID = '$PenjualanID'");
+    $totalHarga = 0;
+    while ($data = $sqlhargaTotal->fetch_assoc()) {
+        $subtotal = $data['Subtotal'];
+        $totalHarga = $totalHarga + $subtotal;
+    }
+
+    $date = date('Y-m-d');
+    if (isset($_POST['print'])) {
+        $namaPelanggan = $_POST['namaPelanggan'];
+        
+        $tambahPelanggan = mysqli_query($con, "INSERT INTO pelanggan VALUES ('$PelangganID', '$namaPelanggan', '', '')");
+
+        $tambahPenjualan = mysqli_query($con, "INSERT INTO penjualan VALUES ('$PenjualanID', '$date', '$totalHarga', '$PelangganID')");
+
+        $produkTerjual = 0;
+        if ($tambahPelanggan && $tambahPenjualan) {
+            echo "
+            <script>
+                alert('Berhasil');
+                window.location.href='print.php';
+            </script>
+            ";
+        } else {
+            echo "
+            <script>
+                alert('Gagal');
+                window.location.href='index.php?page=transaksi';
+            </script>
+            ";
+        }
+    }
+    
+?>
+
+    <div class="container" style="margin-top: 20px;" >
+    <form action="" method="POST">
+        <div class="row">
+            <div class="col-md-8 well">
+                <h2>Transaksi</h2>
+                    <div class="form-group col-sm-6">
+                        <p for="" class="form-label">No Transaksi :  <?php echo $PenjualanID ?></p>
+                    </div>
+                    
+                    <br>
+                    <div class="row">
+                        <div class="form-group">
+                            <label for="">Pilih Barang</label>
+                            <?php
+                                include "koneksi/koneksi.php";
+                                $result = mysqli_query($con,"select * from produk");
+                                $jsArray = "var prdName = new Array();\n";
+
+                                echo '
+                                    <select name="namaProduk" class="form-control" onchange="document.getElementById(\'prd_name\').value = prdName[this.value]">
+                                    <option>Pilih Barang</option>';
+                                while ($row = mysqli_fetch_array($result)) {
+                                    echo '
+                                        <option value="' . $row['NamaProduk'] . '">' . $row['NamaProduk'] . '</option>';
+                                        $jsArray .= "prdName['" . $row['NamaProduk'] . "'] = '" . addslashes($row['Harga']) . "';\n";
+                                }
+                                echo '
+                                </select>';
+                             ?>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="form-group col-md-6">
+                            <label>Harga</label>
+                            <input type="text" class="form-control" name="harga" id="prd_name">
+                        </div>
+                        <script type="text/javascript">
+                            <?php echo $jsArray?>
+                        </script>
+                        <div class="form-group col-md-6">
+                            <label for="">Jumlah</label>
+                            <input type="number" class="form-control" name="jumlah" id="">
+                        </div>
+                    </div>
+                    <br>
+                    <div class="row">
+                        <div class="form-group col-md-5">
+                            <button type="submit" name="pesan" class="btn btn-block btn-primary col-lg-4">Pesan</button>
+                        </div>
+                        <div class="col-md-5"></div>
+                        
+                    </div>
+                
+            </div>
+            <div class="col-md-4 well">
+                <h3>Total</h3>
+                <h1 class="card-header">Rp. <?php echo number_format($totalHarga); ?></h1>
             </div>
         </div>
-    </nav>
-        <div class="p-4" id="main-content">
-          <div class="card mt-5">
-            <div class="card-body">
-                <div class="container mt-5">
-                    <h2>Tambah Transaksi</h2>
-                    <form action="" method="POST">
-                        <div class="col-2">
-                            <label for="tanggal" class="form-label">Tanggal Transaksi</label>
-                            <input type="date" value="<?php echo date('Y-m-d'); ?>" class="form-control" id="tanggal" name="tanggal" readonly required>
-                        </div>
-                        <div>
-                            <label for="nama" class="form-label">Nama Anda</label>
-                            <input type="text" class="form-control" id="nama" name="nama" required>
-                        </div>
-                        <div>
-                            <label for="nomeja" class="form-label">No Meja</label>
-                            <input type="number" min="1" class="form-control" id="nomeja" name="nomeja" required>
-                        </div>
-                        <div id="menuContainer">
-                          <div>
-                              <label for="menu" class="form-label">Menu</label>
-                              <select id="menu" name="menu[]" class="form-control">
-                                <option>Pilih Menu</option>
-                                <?php 
-                                    $sql7 = $con->query("SELECT * FROM produk WHERE Stok > 0");
-                                    while ($data = $sql7->fetch_assoc()) {
-                                ?>
-                                <option value="<?php echo $data['ProdukID'] . '|' . $data['Harga']; ?>"><?php echo $data['NamaProduk'] . " - Rp." . number_format($data['Harga']) . " - Stok:" . $data['Stok']; ?></option>
+    </div>
+    <br>
+    <br>
+    <div class="container ">
+        <h3>Daftar Pembelian</h3>
+        <div class="table-responsive">
+            <table class="table" id="dataTable" border="1" width="100%" cellspacing="0">
+                <thead>
+                    <tr>
+                        <th class="text-center">No</th>
+                        <th class="text-center">Nama Produk</th>
+                        <th class="text-center">Harga</th>
+                        <th class="text-center">Jumlah</th>
+                        <th class="text-center">Total Harga</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <?php 
+                        $no = 1;
+                        $sql = $con->query("SELECT * FROM detailpenjualan WHERE PenjualanID = '$PenjualanID'");
+                        while ($data= $sql->fetch_assoc()) {
+                            $produkid = $data['ProdukID'];
+                            $sql2 = $con->query("SELECT * FROM produk WHERE ProdukID = '$produkid'");
+                    ?>
+                    <tr>
+                    <td class="text-center"><?php echo $no++ ?></td>
+                        <?php 
+                            while ($data2=$sql2->fetch_assoc()) {    
+                        ?>
+                        <td class="text-center"><?php echo $data2['NamaProduk'] ?></td>
+                        <td class="text-center">Rp. <?php echo number_format($data2['Harga'])?></td>
 
-                                <?php } ?>
-
-                              </select>
-                          </div>
-                          <div class="mb-3">
-                              <label for="jumlah" class="form-label">jumlah</label>
-                              <input type="number" min="1" class="form-control" id="jumlah" name="jumlah[]" required>
-                          </div>
-                          
-                        </div>
-
-                        <button type="button" class="btn btn-warning me-3" onclick="tambahMenu()">Tambah Menu+</button>
-
-                        <button type="submit" name="tambah" class="btn btn-primary">Tambah Transaksi</button>
-                    </form>
-                </div>            
-            </div>
-          </div>
+                        <?php } ?>
+                        <td class="text-center"><?php echo $data['JumlahProduk']?></td>
+                        <td class="text-center" name="subtotal">Rp. <?php echo number_format($data['Subtotal'])?></td>
+                        
+                    </tr>
+                    <?php } ?>
+                </tbody>
+                <tfoot>
+                    <tr>
+                        <td colspan="4" class="text-end"><strong>Total Harga:</strong></td>
+                        <td class="text-center" id="totalHarga">
+                            <?php
+                                echo 'Rp. ' . number_format($totalHarga);
+                            ?>
+                        </td>
+                    </tr>
+                </tfoot>
+            </table>
         </div>
-      </body>
-    </html>
+        <div class="form-group col-md-6">
+            <label for="" class="form-label">Maukkan Nama Anda</label>
+            <input type="text" class="form-control" name="namaPelanggan" id="">
+        </div>
+        <br>
+        <div class="well row">
+                <div class="form-group col-md-6">
+                    <button name="print" class="btn btn-block btn-primary">Print</button>
+                </div>
+                <div class="form-group col-md-6">
+
+                </div>
+        </div>
+        </form>
+    </div>
